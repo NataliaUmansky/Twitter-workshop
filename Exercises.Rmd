@@ -1,0 +1,191 @@
+---
+title: 
+- "Collecting and Analyzing Twitter Data"
+subtitle: "COMPTEXT Conference"
+author: 
+- "Natalia Umansky  \n University College Dublin"
+output:
+  pdf_document:
+      keep_tex: yes 
+      extra_dependencies: ["float"]
+  rticles::asa_article: default
+  word_document: default
+editor_options:
+  chunk_output_type: inline
+indent: true
+geometry: margin=1in
+linestretch: 1.5
+header-includes:
+    - \usepackage{setspace}\doublespacing
+    - \usepackage{floatrow}
+    - \usepackage{caption}
+    - \captionsetup{format=hang, font=small,labelfont=bf}
+    - \floatsetup[table]{capposition=top}
+    - \newcommand{\beginsupplement}{\setcounter{table}{0} 
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Libraries
+
+```{r,eval=FALSE}
+library(rtweet)
+library(tidyverse)
+library(tidytext)
+library(ggplot2)
+```
+
+# Exercises
+
+## Data collection
+
+1) Collect the latest 30 tweets that
+
+    - include the hashtag "AcademicTwitter"
+    - and assign the resulting data frame to df_tweets
+    
+
+2) Take some time to explore the data frame
+
+    - see which variables are in there, and how they are called
+    - think about how you could use these variables for research
+    - hint: use functions like `View`, `str`, `names`, `tibble::glimpse`
+    
+
+### Solution
+
+```{r, eval=FALSE}
+# exercise 1 --------------------------------------------------------------
+
+df_tweets <- search_tweets(q = "#AcademicTwitter",
+                           n = 30)
+```
+
+
+3) Collect the latest 50 tweets that include
+
+- the phrase "publish or perish"
+- and the word "academia" but not the word "PhD"
+- excluding retweets
+
+
+4) Collect information on 30 users that
+
+- are associated with the word "PhD", but not with the word "rstats"
+- read one of these users' bio on their homepage via a browser
+
+### Solution
+
+```{r, eval=FALSE}
+# exercise 3 --------------------------------------------------------------
+
+df_tweets <- search_tweets(q = "\"publish or perish\" academia -phd",
+                           n = 50)
+
+# exercise 4 --------------------------------------------------------------
+
+
+df_users <- search_users(q = "PhD -rstats",
+                         n = 30)
+
+View(df_users)
+```
+
+5) Collect the most recent tweets posted by the 30 users identified in excercise 3
+
+
+6) Collect a list of 20 accounts following The Connected_Politics Lab (@Connected_Pol)
+
+
+7) Check your rate limits
+
+
+### Solution
+
+```{r, eval=FALSE}
+# exercise 5 -------------------------------------------------------------
+df_timelines <- get_timeline(user = df_users$user_id)
+
+# exercise 6 -------------------------------------------------------------
+df_followers <- search_users(q = "Connected_Politics")$screen_name
+
+# exercise 7 -------------------------------------------------------------
+df_limits <- rate_limit() %>%
+  mutate(difference = limit - remaining) %>%
+  arrange(-difference)
+```
+
+## Data cleaning
+
+8) Using the df_tweets dataset, create a new variable without mentions, hashtags, links, and emojis
+
+### Solution
+
+```{r, eval=FALSE}
+
+# exercise 8 -------------------------------------------------------------
+df_tweets %>%
+  mutate(no_mentions = 
+           str_remove_all(string = text, pattern = "[@][\\w_-]+"),
+         no_mentions_hashtags = 
+           str_remove_all(string = no_mentions, pattern = "[#][\\w_-]+"),
+         no_mentions_hashtags_links = 
+           str_remove_all(string = no_mentions, pattern = "http\\S+\\s*"),
+         all_clean = 
+           iconv(x = no_mentions_hashtags_links, 
+                 from = "latin1", to = "ASCII", sub = "")) %>%
+  select(text, all_clean)  %>%
+  View()
+```
+
+## Data analysis
+
+9) Load the data
+
+10) Create an edge list
+
+### Solution
+
+```{r, eval=FALSE}
+tweets <- readRDS(url("https://github.com/NataliaUmansky/Twitter-workshop/blob/main/timelines.RDS?raw=true"))
+
+tweets %>%
+  filter(is_retweet == TRUE) %>% 
+  group_by(screen_name, retweet_screen_name) %>%
+  summarise(rts = n()) %>% 
+  head()
+```
+
+11) Plot the retweet network
+
+```{r, eval=FALSE}
+library(tidyverse)
+library(tidygraph)
+library(GGally)
+
+tweets <- readRDS(url("https://github.com/NataliaUmansky/Twitter-workshop/blob/main/timelines.RDS?raw=true"))
+
+tweets_temp <- tweets %>%
+  
+# filter to retweets only, filter out self retweets
+  filter(is_retweet == TRUE & screen_name != retweet_screen_name) %>%
+  
+# reduce to the dataset to two variables only: who retweets whom
+  select(screen_name, retweet_screen_name) %>%
+  
+# calculate the retweet counts
+  group_by(screen_name) %>%
+  count(retweet_screen_name)%>% 
+  filter(n>15) #filtering to get only the strongest relationships
+
+# turn that temporary dataframe into a network structure and creating the plot
+
+
+
+network <- network(tweets_temp, matrix.type='edgelist',ignore.eval=FALSE, directed = T)
+
+ggnet2(network, mode = "fruchtermanreingold", label = T, alpha = 0.5)
+```
+
