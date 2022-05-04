@@ -35,6 +35,8 @@ library(rtweet)
 library(tidyverse)
 library(tidytext)
 library(ggplot2)
+library(network)
+library(GGally)
 ```
 
 # Exercises
