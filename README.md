@@ -11,3 +11,13 @@ Twitter's [Developer terms](https://developer.twitter.com/en/developer-terms/agr
 - /timelines.rds 
     
     - Includes the most recent 200 Tweets shared by Irish politicians listed in the [Politicians Ireland](https://twitter.com/i/lists/21722967) Twitter list
+
+## Exercises
+
+Exercises and solutions are included in the slides. But they can also be found in the following file:
+
+- /Exercises.rmd
+
+## Presentation
+
+- /Workshop-slides.pdf includes the slides used during the workshop
