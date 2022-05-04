@@ -111,7 +111,7 @@ View(df_users)
 df_timelines <- get_timeline(user = df_users$user_id)
 
 # exercise 6 -------------------------------------------------------------
-df_followers <- search_users(q = "Connected_Politics")$screen_name
+df_followers <- get_followers("Connected_Pol", n=20)
 
 # exercise 7 -------------------------------------------------------------
 df_limits <- rate_limit() %>%
